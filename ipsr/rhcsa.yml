@@ -26,8 +26,10 @@
     parted:
       device: /dev/vdb
       state: present
-      number: 2
+      number: "{{ item[0] }}"
       part_end: 1GiB
+    with_nested:
+      - [ '1', '2', '3' ]
   - name: Create volume group vgroup
     lvg:
       pvs: /dev/vdb2

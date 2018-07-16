@@ -1,0 +1,64 @@
+- name: Playbook to setup RHCSA exam machines
+  hosts: server0.example.com
+  tasks:
+  - name: Changing password for user root
+    user:
+      name: root
+      password: "{{ 'something' | password_hash('sha512') }}"
+  - name: Removing student user from wheel group
+    user:
+      name: student
+      groups: null
+      shell: /sbin/nologin
+#  - name: Change target to multiuser target
+#    service:
+#      name: systemd
+#      enabled:  true
+#      runlevel: 3
+  - name: Remove repository
+    file:
+      path: /etc/yum.repos.d/rhel_dvd.repo
+      state: absent
+  - name: Disable Selinux
+    selinux:
+      state: disabled
+  - name: Create partitions
+    parted:
+      device: /dev/vdb
+      state: present
+      number: 2
+      part_end: 1GiB
+  - name: Create volume group vgroup
+    lvg:
+      pvs: /dev/vdb2
+      vg: vgroup
+      state: present
+  - name: Create logical volume m7_storage
+    lvol:
+      vg: vgroup
+      lv: m7_storage
+      size: 700m
+  - name: Format all partitions
+    filesystem:
+      dev: "{{ item[0] }}"
+      fstype: "{{ item[1] }}"
+    with_nested:
+      - [ '/dev/vdb1', '/dev/vgroup/m7_storage' ]
+      - [ 'ext3', 'ext4' ]
+  - name:  Create swap space for 3rd partition
+    shell:
+      cmd: "/usr/sbin/mkswap /dev/vdb3"
+  - name: Add swap partition to fstab file.
+    lineinfile:
+      path: /etc/fstab
+      line: "/dev/vdb3 swap swap defaults 0 0"
+  - name: mount all partitions
+    mount:
+      state: mounted
+      src: "{{ item[0] }}"
+      path: "{{ item[1] }}"
+      fstype: "{{ item[2] }}"
+    with_nested:
+      - [ '/dev/vdb1', '/dev/vgroup/m7_storage' ]
+      - [ '/mnt/sroot', '/mnt/lvm' ]
+      - [ 'ext3', 'ext4' ]

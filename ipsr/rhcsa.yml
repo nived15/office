@@ -22,31 +22,37 @@
   - name: Disable Selinux
     selinux:
       state: disabled
-  - name: Create partitions
+  - name: Create all partitions
     parted:
       device: /dev/vdb
       state: present
-      number: "{{ item[0] }}"
-      part_end: 1GiB
-    with_nested:
-      - [ '1', '2', '3' ]
+      part_type: primary
+      number: "{{ item.name }}"
+      label: "{{ item.label }}"
+      flags: "{{ item.flag }}"
+      part_start: "{{ item.start }}"
+      part_end: "{{ item.end }}"
+    with_items:
+      - { name: '1', label: 'msdos', flag: 'lvm', start: '0MiB', end: '1GiB' }
+      - { name: '2', label: 'msdos', flag: 'lvm', start: '1024MiB', end: '2GiB' }
+      - { name: '3', label: 'msdos', flag: 'lvm', start: '2049MiB', end: '3GiB' }
   - name: Create volume group vgroup
     lvg:
-      pvs: /dev/vdb2
       vg: vgroup
-      state: present
+      pvs: /dev/vdb2
   - name: Create logical volume m7_storage
     lvol:
+      pvs: /dev/vdb2
       vg: vgroup
       lv: m7_storage
       size: 700m
   - name: Format all partitions
     filesystem:
-      dev: "{{ item[0] }}"
-      fstype: "{{ item[1] }}"
-    with_nested:
-      - [ '/dev/vdb1', '/dev/vgroup/m7_storage' ]
-      - [ 'ext3', 'ext4' ]
+      dev: "{{ item.dev }}"
+      fstype: "{{ item.fs }}"
+    with_items:
+      - { dev: '/dev/vdb1', fs: 'ext3' }
+      - { dev: '/dev/vgroup/m7_storage', fs: ext4}
   - name:  Create swap space for 3rd partition
     shell:
       cmd: "/usr/sbin/mkswap /dev/vdb3"

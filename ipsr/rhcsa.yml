@@ -1,5 +1,5 @@
 - name: Playbook to setup RHCSA exam machines
-  hosts: test
+  hosts: desktop0.example.com
   tasks:
   - name: Changing password for user root
     user:
@@ -8,7 +8,7 @@
   - name: Removing student user from wheel group
     user:
       name: student
-      groups: ~
+      groups: ''
       shell: /sbin/nologin
   - name: Remove repository
     file:

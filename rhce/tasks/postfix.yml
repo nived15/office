@@ -1,0 +1,118 @@
+- name: Create mail dir for student on server machine
+  file:
+    path: /home/student/Mail
+    state: directory
+    owner: student
+    group: student
+    mode: 0700
+  when: "'server' in inventory_hostname"
+- name: Downloading mutt certificates on server machine
+  uri:
+    url:  http://{{ ansible_fqdn }}/dovecot.pem
+    dest: /home/student/.mutt_certificates
+  when: "'server' in inventory_hostname"
+- file:
+    path: /home/student/.mutt_certificates
+    owner: student
+    group: student
+    mode: 0600
+  when: "'desktop' in inventory_hostname"
+- name: Copying relevant configurations for smtp server on desktop machine
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: 10-master.conf, dest: /etc/dovecot/conf.d/10-master.conf }
+    - { src: dovecot-openssl.cnf, dest: /etc/pki/dovecot/dovecot-openssl.cnf }
+    - { src: postfix-openssl.cnf, dest: /etc/pki/tls/postfix-openssl.cnf }
+  when: "'desktop' in inventory_hostname"
+- name: Modifying relavent parameters in dovecot conf files
+  lineinfile:
+    line: "{{ item.line }}"
+    path: "{{ item.path }}"
+  with_items:
+    - { line: "mail_location = mbox:~/mail:INBOX=/var/mail/%u", path: /etc/dovecot/conf.d/10-mail.conf }
+    - { line: "disable_plaintext_auth = no", path: /etc/dovecot/conf.d/10-auth.conf }
+    - { line: "protocols = imap", path: /etc/dovecot/dovecot.conf }
+    - { line: "submission inet n       -       n       -       -       smtpd", path: /etc/postfix/master.cf }
+  when: "'desktop' in inventory_hostname"
+- name: Delete old certificates of postfix and dovecot
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/pki/dovecot/certs/dovecot.pem
+    - /etc/pki/dovecot/private/dovecot.pem
+    - /etc/pki/tls/certs/postfix.pem
+    - /etc/pki/tls/private/postfix.pem
+  when: "'desktop' in inventory_hostname"
+- name: Make changes to postfix configuration as well
+  lineinfile:
+    line: "{{ item }}"
+    path: /etc/postfix/main.cf
+  with_items:
+    - "smtpd_sasl_auth_enable = yes"
+    - "smtpd_sasl_type = dovecot"
+    - "smtpd_sasl_path = private/auth"
+    - "smtpd_recipient_restrictions =  permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination"
+    - "smtpd_tls_security_level = may"
+    - "smtpd_tls_cert_file = /etc/pki/tls/certs/postfix.pem"
+    - "smtpd_tls_key_file = /etc/pki/tls/private/postfix.pem"
+  when: "'desktop' in inventory_hostname"
+- lineinfile:
+    regexp: "{{ item.exp }}"
+    line: "{{ item.line }}"
+    path: /etc/postfix/main.cf
+  with_items:
+    - { exp: "^inet_interfaces = ", line: "inet_interfaces = all" }
+    - { exp: "^mynetworks = ", line: "mynetworks = 172.25.0.0/24" }
+  when: "'desktop' in inventory_hostname"
+- name: Create certificates for dovecot and postfix
+  shell: |
+        openssl req -new -x509 -nodes -config /etc/pki/dovecot/dovecot-openssl.cnf -out /etc/pki/dovecot/certs/dovecot.pem -keyout /etc/pki/dovecot/private/dovecot.pem -days 365 ; openssl req -new -x509 -nodes -config /etc/pki/tls/postfix-openssl.cnf -out /etc/pki/tls/certs/postfix.pem -keyout /etc/pki/tls/private/postfix.pem -days 365 ; openssl x509 -subject -fingerprint -noout -in /etc/pki/dovecot/certs/dovecot.pem ; openssl x509 -subject -fingerprint -noout -in /etc/pki/tls/certs/postfix.pem
+  when: "'desktop' in inventory_hostname"
+- name: Making certificates more secure
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  with_items:
+    - /etc/pki/dovecot/certs/dovecot.pem
+    - /etc/pki/dovecot/private/dovecot.pem
+    - /etc/pki/tls/certs/postfix.pem
+    - /etc/pki/tls/private/postfix.pem
+  when: "'desktop' in inventory_hostname"
+- name: Add user student to mail group
+  user:
+    name: student
+    groups: mail
+    append: true
+- name: Copy dovecot certifcate to webserver
+  copy:
+    src: /etc/pki/dovecot/certs/dovecot.pem
+    dest: /var/www/html
+    mode: 0444
+  when: "'desktop' in inventory_hostname"
+- name: Restart postfix and dovecot services
+  service:
+    name: "{{ item }}"
+    state: restarted
+    enable: true
+  with_items:
+    - postfix
+    - dovecot
+    - httpd
+  when: "'desktop' in inventory_hostname"
+- name: Open ports in firewall
+  firewalld:
+    port: "{{ item }}"
+    state: enabled
+    permanent: true
+    immediate: true
+  with_items:
+    - 25
+    - 80
+    - 587
+    - 993
+  when: "'desktop' in inventory_hostname"

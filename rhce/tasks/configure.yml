@@ -1,0 +1,27 @@
+- name: Configuring kerberized server for nfs on both machines
+  shell: |
+    authconfig --enableldap --enableldaptls --ldapserver=ldaps://classroom.example.com --ldapbasedn='dc=example,dc=com' --ldaploadcacert='http://classroom.example.com/pub/example-ca.crt' --enablekrb5 --krb5realm=EXAMPLE.COM --krb5kdc=classroom.example.com --krb5adminserver=classroom.example.com --enablesssd --enablesssdauth --enablemkhomedir --update
+- name: Configure script for Dynamic web server
+  copy: 
+    src: webapp
+    dest: /home/student/
+    owner: student
+    group: student
+    mode: 0644
+- name: Creating interface for teaming and configuring gateway
+  template:
+    src:  teambridge
+    dest: /usr/sbin/teambridge
+    mode: 0755
+  when: "'server' in inventory_hostname"
+- copy:
+    src: hidden
+    dest: /etc/systemd/system/hiddenbridge.service
+  when: "'server' in inventory_hostname"
+- shell: |
+    teambridge
+    systemctl daemon-reload
+    systemctl start hiddenbridge.service
+    systemctl enable hiddenbridge.service
+  when: "'server' in inventory_hostname"
+

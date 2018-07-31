@@ -1,0 +1,4 @@
+- name: SETTING UP RHCE PRACTISE MACHINES
+  hosts:  all
+  roles:
+    - rhce

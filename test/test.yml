@@ -1,0 +1,8 @@
+- hosts: all
+  vars:
+    tit: has real value
+  tasks:
+  - include_vars: var.yml
+  - template:
+      src: file
+      dest: /etc/motd

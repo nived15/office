@@ -1,0 +1,16 @@
+#### /etc/systemd/system/hiddenbridge.service
+
+
+[Unit]
+Description=Create two virtual network interfaces for Red Hat Enterprise Linux System Administration III training (RH254)
+Before=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/teambridge
+RemainAfterExit=yes
+ExecStopPost=ip netns del hidden
+
+[Install]
+WantedBy=network.target
+

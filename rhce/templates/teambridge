@@ -1,0 +1,33 @@
+#!/bin/bash
+OLDENFORCE=$(getenforce)
+setenforce 0
+
+# create namespace
+ip netns add hidden
+
+# Activate ::1 inside namespace
+ip netns exec hidden ip link set dev lo up
+
+# Add bridge inside "hidden" namespace and turn on
+ip netns exec hidden brctl addbr hiddenbr0
+ip netns exec hidden ip link set dev hiddenbr0 up
+
+# Add virtual patch cables to bridge
+# the eno1/eno2 ends are student-visible
+ip link add {{ team.port.1 }} type veth peer name {{ team.port.1 }}-port
+ip link add {{ team.port.2 }} type veth peer name {{ team.port.2 }}-port
+ip link set {{ team.port.1 }}-port netns hidden up
+ip link set {{ team.port.2 }}-port netns hidden up
+ip netns exec hidden brctl addif hiddenbr0 {{ team.port.1 }}-port
+ip netns exec hidden brctl addif hiddenbr0 {{ team.port.2 }}-port
+
+# Attach virtual patch cable to bridge inside namespace
+# and assign its far side address as 192.168.0.254/24.
+ip netns exec hidden ip link add inside0 type veth peer name inside0-port
+ip netns exec hidden brctl addif hiddenbr0 inside0-port
+ip netns exec hidden ip link set inside0-port up
+ip netns exec hidden ip link set inside0 up
+ip netns exec hidden ip addr add {{ gateway_IP }} dev inside0 
+
+setenforce $(OLDENFORCE)
+

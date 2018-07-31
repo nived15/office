@@ -1,0 +1,21 @@
+- name: Installing packages required for secure nfs
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - sssd
+    - krb5-workstation
+- name: Installing desktop packages for postfix 
+  yum:
+    name: mutt 
+    state: latest
+  when: "'server' in inventory_hostname"
+- name: Installing server packages for postfix
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - dovecot
+    - postfix
+    - httpd
+  when: "'desktop' in inventory_hostname"

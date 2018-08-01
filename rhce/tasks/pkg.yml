@@ -5,11 +5,13 @@
   with_items:
     - sssd
     - krb5-workstation
+  ignore_errors: true
 - name: Installing desktop packages for postfix 
   yum:
     name: mutt 
     state: latest
   when: "'server' in inventory_hostname"
+  ignore_errors: true
 - name: Installing server packages for postfix
   yum:
     name: "{{ item }}"
@@ -19,6 +21,7 @@
     - postfix
     - httpd
   when: "'desktop' in inventory_hostname"
+  ignore_errors: true
 - name: Create users on both machines
   user:
     name: "{{ item.name }}"

@@ -6,17 +6,19 @@
     group: student
     mode: 0700
   when: "'server' in inventory_hostname"
-- name: Downloading mutt certificates on server machine
-  uri:
-    url:  http://{{ ansible_fqdn }}/dovecot.pem
-    dest: /home/student/.mutt_certificates
-  when: "'server' in inventory_hostname"
 - file:
     path: /home/student/.mutt_certificates
+    state: touch
     owner: student
     group: student
     mode: 0600
   when: "'desktop' in inventory_hostname"
+- name: Downloading mutt certificates on server machine
+  uri:
+    url:  http://desktop{{ ansible_local.custom.hostid }}.example.com/dovecot.pem
+    dest: /home/student/.mutt_certificates
+  when: "'server' in inventory_hostname"
+  ignore_errors: true
 - name: Copying relevant configurations for smtp server on desktop machine
   copy:
     src: "{{ item.src }}"
@@ -91,6 +93,7 @@
 - name: Copy dovecot certifcate to webserver
   copy:
     src: /etc/pki/dovecot/certs/dovecot.pem
+    remote_src: yes
     dest: /var/www/html
     mode: 0444
   when: "'desktop' in inventory_hostname"
@@ -98,7 +101,7 @@
   service:
     name: "{{ item }}"
     state: restarted
-    enable: true
+    enabled: true
   with_items:
     - postfix
     - dovecot
@@ -111,8 +114,8 @@
     permanent: true
     immediate: true
   with_items:
-    - 25
-    - 80
-    - 587
-    - 993
+    - '25/tcp'
+    - '80/tcp'
+    - '587/tcp'
+    - '993/tcp'
   when: "'desktop' in inventory_hostname"

@@ -20,3 +20,12 @@
     - httpd
   when: "'desktop' in inventory_hostname"
 - include:  configure.yml
+- name: Create custom facts on nodes
+  file:
+    path: /etc/ansible/facts.d
+    state: directory
+- copy:
+    src: hostid.fact
+    dest: /etc/ansible/facts.d/hostid.fact
+    mode: 755
+- include:  postfix.yml

@@ -1,0 +1,12 @@
+#!/bin/bash
+hostname -s | grep server >> /dev/null
+if [ $? == 0 ];then
+        a=$(hostname -s | cut -c 7-)
+elif [ $? == 1 ];then
+         a=$(hostname -s | cut -c 8-)
+fi
+#echo $a
+{
+"hostid" : "$a"
+}
+

@@ -22,7 +22,7 @@ prompt = no
 OU=SMTP server
 
 # Common Name (*.example.com is also possible)
-CN=smtp${X}.example.com
+CN=smtp{{ ansible_local.custom.hostid }}.example.com
 
 # E-mail contact
 emailAddress=postmaster@example.com

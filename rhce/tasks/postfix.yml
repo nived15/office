@@ -119,3 +119,10 @@
     - '587/tcp'
     - '993/tcp'
   when: "'desktop' in inventory_hostname"
+- name: reboot the system for changes to take space
+  shell:
+    cmd:  "{{ item }}"
+  with_items: 
+      - '/usr/bin/systemctl set-default multi-user.target'
+#      - '/usr/bin/systemctl reboot'
+  ignore_errors: true

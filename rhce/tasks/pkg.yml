@@ -19,3 +19,21 @@
     - postfix
     - httpd
   when: "'desktop' in inventory_hostname"
+- name: Create users on both machines
+  user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+  with_items:
+    - { name: tom, uid: 7000 }
+    - { name: harry, uid: 8000 }
+- name: Changing password for user root
+  user:
+    name: root
+    password: "{{ 'something' | password_hash('sha512') }}"
+- name: Remove repository
+  file:
+    path: /etc/yum.repos.d/rhel_dvd.repo
+    state: absent
+- name: Disable Selinux
+  selinux:
+    state: permissive

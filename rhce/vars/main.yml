@@ -5,5 +5,25 @@ team:
     1:  eno1
     2:  eno2
 gateway_IP: '192.168.0.254/24'
-
-
+postfix_certs:
+  - /etc/pki/dovecot/certs/dovecot.pem
+  - /etc/pki/dovecot/private/dovecot.pem
+  - /etc/pki/tls/certs/postfix.pem
+  - /etc/pki/tls/private/postfix.pem
+dovecot_cert:
+  - '-----BEGIN CERTIFICATE-----
+    MIICRTCCAa6gAwIBAgIJALjpFpgbTiNUMA0GCSqGSIb3DQEBBQUAMFkxFDASBgNV
+    BAsTC0lNQVAgc2VydmVyMRowGAYDVQQDExFpbWFwMC5leGFtcGxlLmNvbTElMCMG
+    CSqGSIb3DQEJARYWcG9zdG1hc3RlckBleGFtcGxlLmNvbTAeFw0xODA4MDExMzAx
+    MjFaFw0xOTA4MDExMzAxMjFaMFkxFDASBgNVBAsTC0lNQVAgc2VydmVyMRowGAYD
+    VQQDExFpbWFwMC5leGFtcGxlLmNvbTElMCMGCSqGSIb3DQEJARYWcG9zdG1hc3Rl
+    ckBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA5ag+cT9+
+    v1PHBTlQlnTz/UJhQNRjgqR8kIlaO4bwsFOgJof6NKEtvojDcdq/XwwEk9kjbj9T
+    WkC6fOr9Au3pK6Drp8+KRlvObtQF8RxbvMLHJiESxw6+tz/y7jPKL3J2ir5UMzUx
+    Rwiok8YLHqIallrDeUY8Xd4cWoFak9Fsxp0CAwEAAaMVMBMwEQYJYIZIAYb4QgEB
+    BAQDAgZAMA0GCSqGSIb3DQEBBQUAA4GBAA+fdSyF+VT1ceA4fFP1UnyJEeY4dv0L
+    IsqWHWbcWMcNOVBbK76Fs038taTsRBd5ZK/8Tu6TbN60hA3QaJjMMOEm5PCr1d+e
+    AQcYtPI/nEpuSsLHsWEXrP7JsfMhPukIg4DpBxK42brg8Aw2aJKigB6RP/PpO//7
+    gqBJ23CzDQBM
+    -----END CERTIFICATE-----'
+ 
